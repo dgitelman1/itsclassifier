@@ -22,16 +22,21 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    def topprediction(text):
+    def prediction_list(text):
         inputs = tokenizer(text, return_tensors="pt")
         with torch.no_grad():
             logits = model(**inputs).logits
-        predicted_class_id = logits.argmax().item()
-        return model.config.id2label[str(predicted_class_id)]
+        predicted_class_id = logits
+        predicted_class_id = torch.topk(logits, 3)
+        predictions = []
+        for i in range(3):
+            pred = predicted_class_id[1][0][i].item()
+            predictions.append(model.config.id2label[str(pred)])
+        return predictions
     
     email = request.form.get('content')
-    prediction = topprediction(email)
+    prediction = prediction_list(email)
     return render_template("index.html", prediction=prediction, email=email)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)
