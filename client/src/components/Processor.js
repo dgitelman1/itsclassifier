@@ -10,7 +10,7 @@ const Processor = ({ isDev }) => {
 
   var baseQuery = "";
   if (isDev) {
-    baseQuery = "http://localhost:4000";
+    baseQuery = "http://localhost:8080";
   } else {
     baseQuery = "https://kona.ucsd.edu/python";
   }
@@ -29,28 +29,22 @@ const Processor = ({ isDev }) => {
     setTicket("");
   };
 
-  const getPrediction = async (
-    ticket
-  ) => {
-    
-    setLoading(true);
-    try {
-        console.log("Awaiting Flask API...");
-        const response = await axios.post('http://localhost:4000/predict', { ticket });
-        prediction = response.data.prediction;
-    } catch (err) {
-        console.error(err);
-    }
-    setLoading(false);
-  };
-
-  //onClick for the Parse Button
   const predict = async (originalTicket) => {
     try {
       var ticket = originalTicket.toString(); 
 
-      getPrediction(ticket);
+      setLoading(true);
+      try {
+          console.log("Awaiting Flask API...");
+          const response = await axios.post('http://localhost:8080/predict', { ticket });
+          prediction = response.data;
+          console.log("Prediction: ", prediction);
+      } catch (err) {
+          console.error(err);
+      }
+      setLoading(false);
 
+      console.log("Setting output data to ", prediction);
       setOutputData(prediction);
     } catch (err) {
       console.error(err);

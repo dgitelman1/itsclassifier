@@ -5,11 +5,14 @@ import torch
 import json
 import ast
 import os
+import logging
 
 app = Flask(__name__)
-port = int(os.environ.get('FLASK_PORT', 4000))
+port = int(os.environ.get('FLASK_PORT', 8080))
 cors = CORS(app, origins=["http://localhost:3000"])
 print("App running on port ", port)
+logging.basicConfig(level=logging.DEBUG)
+app.logger.setLevel(logging.INFO)
 
 
 with open("conversions/id2label.txt", "r") as data:
@@ -24,21 +27,34 @@ model = AutoModelForSequenceClassification.from_pretrained(deberta_v3_large,id2l
 
 @app.route('/ping')
 def ping():
-    print("Returning ping...")
-    return jsonify({'status': 'OK'})
+    app.logger.info('Flask app received ping')
+    #return jsonify({'status': 'OK'})
+    return "Pong!"
 
 @app.route("/predict", methods=["POST"])
 def predict():
     def topprediction(text):
-        inputs = tokenizer(text, return_tensors="pt")
-        with torch.no_grad():
-            logits = model(**inputs).logits
-        predicted_class_id = logits.argmax().item()
-        return model.config.id2label[str(predicted_class_id)]
+        try:
+            app.logger.info('topprediction: Trying topprediction')
+            inputs = tokenizer(text, return_tensors="pt")
+            app.logger.info('topprediction: Successfully tokenized inputs')
+            with torch.no_grad():
+                logits = model(**inputs).logits
+            app.logger.info('topprediction: Successfully created logits')
+            predicted_class_id = logits.argmax().item()
+            app.logger.info('topprediction: Returning model prediction')
+            return model.config.id2label[str(predicted_class_id)]
+        except Exception as e:
+            app.logger.error(f"topprediction: An error occurred in topprediction: {e}")
+            return None
     
+    app.logger.info('Flask app received a predict request')
+    app.logger.info(f'Request data: {request.json}')
+
     ticket = request.json['ticket']
+    app.logger.info(f'Creating prediction for {ticket}...')
     prediction = topprediction(ticket)
-    print("Returning prediction...")
+    app.logger.info(f'Returning prediction: {prediction}')
     return jsonify(prediction)
 
 if __name__ == '__main__':

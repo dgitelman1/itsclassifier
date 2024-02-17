@@ -4,15 +4,15 @@ services:
     container_name: "itsclassifier_python_api"
     build:
       context: ./python
-    volumes:
-      - ./python:/app
-    ports:
-      - "6000:6000"
-    expose:
-      - "6000"
     environment:
       - FLASK_APP=app.py
-      - FLASK_PORT=4000
+      - FLASK_PORT=8080
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    volumes:
+      - ./python:/python
   react:
     container_name: "itsclassifier_react"
     build:
@@ -25,6 +25,3 @@ services:
       - "3000"
     volumes:
       - ./client/src:/app/src
-volumes:
-  react:
-  node:
